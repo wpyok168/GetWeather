@@ -78,7 +78,27 @@ namespace 天气预报
                         }
                         if (item1.ClassName.ToLower().Equals("win"))
                         {
-                            tQ.Wind = item1.TextContent.Replace("\n", ""); ;
+                            tQ.Wind = item1.TextContent.Replace("\n", "");
+                            //IEnumerable<IElement> nodes1 = item1.Children.Where(m => m.TagName.Equals("EM"));
+                            //foreach (IElement node in nodes1.First().Children)
+                            //{
+
+                            //}
+
+                            if (item1.Children.Count() >0 )
+                            {
+                                foreach (var item2 in item1.Children[0].Children)
+                                {
+                                    if (string.IsNullOrEmpty(tQ.NNW))
+                                    {
+                                        tQ.NNW = item2.GetAttribute("title");
+                                    }
+                                    else
+                                    {
+                                        tQ.NNW = tQ.NNW + "转" + item2.GetAttribute("title");
+                                    }  
+                                }
+                            }
                         }
                     }
                 }
@@ -124,8 +144,24 @@ namespace 天气预报
                         }
                         if (item.QuerySelector(".win") != null)
                         {
-                            List<HtmlNode> list1 = (item.ChildNodes.Where(m => m.Name == "i")).ToList<HtmlNode>();
+                            //List<HtmlNode> list1 = (item.ChildNodes.Where(m => m.Name == "i")).ToList<HtmlNode>();
                             tQ.Wind = (item.ChildNodes.Where(m => m.Name == "i")).ToList<HtmlNode>()[0].InnerText;
+                            HtmlNodeCollection list1 = (item.ChildNodes.Where(m => m.Name == "em")).ToList<HtmlNode>()[0].ChildNodes;
+                            foreach (HtmlNode item1 in list1)
+                            {
+                                if (item1.Name.Equals("#text"))
+                                {
+                                    continue;
+                                }
+                                else if (string.IsNullOrEmpty(tQ.NNW))
+                                {
+                                    tQ.NNW = item1.GetAttributeValue("title", "");
+                                }
+                                else
+                                {
+                                    tQ.NNW = tQ.NNW + "转" + item1.GetAttributeValue("title", "");
+                                }
+                            }
                         }
                     }
                     list.Add(tQ);
@@ -138,7 +174,7 @@ namespace 天气预报
             public string Weather { get; set; } //天气
             public string Temperature { get; set; } //温度
             public string Wind { get; set; } //风力
-
+            public string NNW { get; set; } //方向
 
         }
     }
