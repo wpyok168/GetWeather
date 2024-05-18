@@ -18,6 +18,10 @@ namespace 天气预报
     {
         static void Main(string[] args)
         {
+            //方法一
+            List<TQ> tq= GetWeather("思明");
+            string retstr = ListToSB(tq, "思明");
+            //方法二
             WebClient web = new WebClient();
             web.Encoding = Encoding.UTF8;
             //string str = web.DownloadString("http://www.weather.com.cn/weather/101230203.shtml");
@@ -168,14 +172,105 @@ namespace 天气预报
                 }
             }
         }
+
+
+        public static List<TQ> GetWeather(string city)
+        {
+            WebClient web = new WebClient();
+            web.Encoding = Encoding.UTF8;
+            //string str = web.DownloadString("http://www.weather.com.cn/weather/101230203.shtml");
+            //var t = web.DownloadStringTaskAsync("http://www.weather.com.cn/weather/101230203.shtml");    
+            //t.Wait();
+            var t = web.DownloadDataTaskAsync("http://www.weather.com.cn/weather/101230203.shtml");
+            string html = Encoding.UTF8.GetString(t.Result);
+
+            //var web2 = new HtmlWeb();
+            //var doc = web2.Load("http://www.weather.com.cn/weather/101230203.shtml");
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(html); //  The document contains <i><3级</i> tags
+            HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes("//*[@id=\"7d\"]/ul"); // 有问题：丢失风力 ＜3级  Missing <i><3级</i> tags after SelectNodes
+                                                                                           //CSS选择器需要再nuget: HtmlAgilityPack.CssSelectors
+            HtmlNode hnode = doc.DocumentNode.QuerySelector(".t.clearfix");  // 有问题：丢失风力 ＜3级
+            HtmlNode hnode1 = doc.DocumentNode.QuerySelector(".c7d");
+            List<TQ> list = new List<TQ>();
+
+            foreach (HtmlNode node in nodes.Elements())
+            {
+                if (node.Name == "li")
+                {
+                    TQ tQ = new TQ();
+                    foreach (HtmlNode item in node.ChildNodes)
+                    {
+                        if (item.Name == "h1")
+                        {
+                            tQ.Date = item.InnerText;
+                        }
+                        if (item.Name == "p" && item.OuterHtml.Contains("wea"))
+                        {
+                            tQ.Temperature = item.InnerText;
+                        }
+                        if (item.QuerySelector(".tem") != null)
+                        {
+                            tQ.Weather = item.InnerText;
+                        }
+                        if (item.QuerySelector("p.win") != null)
+                        {
+                            if (item.QuerySelector("p.win").QuerySelector("em") != null)
+                            {
+                                tQ.NNW = item.QuerySelector("p.win").QuerySelector("em").QuerySelectorAll("span")[0].GetAttributeValue("title", "") + "转" + item.QuerySelector("p.win").QuerySelector("em").QuerySelectorAll("span")[1].GetAttributeValue("title", "");
+                            }
+
+                        }
+                        if (item.QuerySelector(".win") != null)
+                        {
+                            List<HtmlNode> list1 = (item.ChildNodes.Where(m => m.Name == "i")).ToList<HtmlNode>();
+                            tQ.Wind = (item.ChildNodes.Where(m => m.Name == "i")).ToList<HtmlNode>()[0].InnerText;
+                        }
+                    }
+                    list.Add(tQ);
+                }
+            }
+            return list;
+        }
+        public static string  ListToSB(List<TQ> list,string city)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"城市：{city}\r\n--------------");
+            string mm = DateTime.Now.ToString("MMM");
+            foreach (TQ item in list)
+            {
+                sb.AppendLine($"日期：{mm}{item.Date.Replace("\n", "")}" );
+                sb.Append($"温度：{item.Weather.Replace("\n","")}\r\n" );
+                sb.Append($"天气：{item.Temperature}\r\n");
+                sb.Append($"风向：{item.NNW}\r\n");
+                sb.Append($"风力：{item.Wind}\r\n");
+                sb.Append("--------------\r\n");
+            }
+            return  sb.ToString();
+        }
         public class TQ
         {
+            /// <summary>
+            /// 日期
+            /// </summary>
             public string Date { get; set; } //日期
-            public string Weather { get; set; } //天气
-            public string Temperature { get; set; } //温度
+            /// <summary>
+            /// 温度
+            /// </summary>
+            public string Weather { get; set; } //温度
+            /// <summary>
+            /// 天气
+            /// </summary>
+            public string Temperature { get; set; } //天气
+            /// <summary>
+            /// 风力
+            /// </summary>
             public string Wind { get; set; } //风力
+            /// <summary>
+            /// 风向
+            /// </summary>
             public string NNW { get; set; } //方向
-
         }
+
     }
 }
