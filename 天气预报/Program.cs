@@ -11,6 +11,9 @@ using AngleSharp.Dom;
 using System.Text.RegularExpressions;
 using Newtonsoft;
 using Newtonsoft.Json.Linq;
+using System.Reflection;
+using System.IO;
+using System.Web;
 
 namespace 天气预报
 {
@@ -18,6 +21,8 @@ namespace 天气预报
     {
         static void Main(string[] args)
         {
+            GetCityWeather("安溪");
+            
             //方法一
             List<TQ> tq= GetWeather("安溪");
             string retstr = ListToSB(tq, "安溪");
@@ -176,6 +181,7 @@ namespace 天气预报
 
         public static List<TQ> GetWeather(string cityname)
         {
+            // 手机版 城市数据 https://i.tq121.com.cn/j/wap2016/news/city_search_data.js?2022042521
             WebClient web = new WebClient();
             web.Encoding = Encoding.UTF8;
             long tt =DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -283,7 +289,86 @@ namespace 天气预报
             /// 风向
             /// </summary>
             public string NNW { get; set; } //方向
+            //string sunrise = string.Empty; string sunset = string.Empty;
+            /// <summary>
+            /// 日出
+            /// </summary>
+            public string Sunrise { get; set; }
+            /// <summary>
+            /// 日落
+            /// </summary>
+            public string Sunset { get; set;}
+            /// <summary>
+            /// 农历
+            /// </summary>
+            public string Lunar { get; set; }
         }
 
+        public static string GetCityJsonData()
+        {
+            string retstr = string.Empty;
+            //string name = Assembly.GetExecutingAssembly().GetName().Name;
+            //string namespc = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+            Assembly asm = Assembly.GetExecutingAssembly();
+            //var cdm = asm.GetManifestResourceNames();   
+            foreach (string c in asm.GetManifestResourceNames() ) 
+            {
+                if (c.Contains("CityDataMobile.json"))
+                {
+                   
+                    //var stream1 = asm.GetManifestResourceStream(MethodBase.GetCurrentMethod().DeclaringType.Namespace+ ".CityDataMobile.json");
+                    var stream2 = asm.GetManifestResourceStream(c);
+                    using (StreamReader sr = new StreamReader(stream2))
+                    {
+                        retstr = sr.ReadToEnd();   
+                    }
+                }
+            }
+            //JObject.Parse
+            return retstr;
+        }
+        public static string GetCityID(string city)
+        {
+            string cityid = string.Empty;
+
+            JToken obj = JObject.Parse(GetCityJsonData()).SelectToken("$.citySearchSource");
+            //JArray jArray = obj.ToObject<JArray>();
+            foreach (JToken item in obj)
+            {
+                //string a = item.SelectToken("$.n").ToString();
+                if (item.SelectToken("$.n").ToString().Contains(city))
+                {
+                    cityid = item.SelectToken("$.ac").ToString();
+                    break;
+                }
+            }
+
+            return cityid;
+        }
+        private static string GetCityWeather(string cityname)
+        {
+            //GetCityID("安溪");
+            //https://m.weather.com.cn/mweather15d/101230501.shtml
+            string cityid = GetCityID(cityname);
+            WebClient web = new WebClient();
+            web.Encoding = Encoding.UTF8;
+            var t = web.DownloadDataTaskAsync(new Uri($"https://m.weather.com.cn/mweather15d/{cityid}.shtml"));
+            t.Wait();
+            string html = Encoding.UTF8.GetString(t.Result);
+            HtmlDocument hdc = new HtmlDocument();
+            hdc.LoadHtml(html);
+            List< HtmlNode> hn = (List<HtmlNode>)hdc.DocumentNode.QuerySelector(".h15listbody>.list-ul").QuerySelectorAll("li");
+           
+            foreach (HtmlNode item in hn)
+            {
+                if (item.Name.Equals("#text"))
+                {
+                    continue;
+                }
+
+            }
+
+            return "";
+        }
     }
 }
