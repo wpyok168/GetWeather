@@ -19,8 +19,8 @@ namespace 天气预报
         static void Main(string[] args)
         {
             //方法一
-            List<TQ> tq= GetWeather("思明");
-            string retstr = ListToSB(tq, "思明");
+            List<TQ> tq= GetWeather("安溪");
+            string retstr = ListToSB(tq, "安溪");
             //方法二
             WebClient web = new WebClient();
             web.Encoding = Encoding.UTF8;
@@ -174,16 +174,29 @@ namespace 天气预报
         }
 
 
-        public static List<TQ> GetWeather(string city)
+        public static List<TQ> GetWeather(string cityname)
         {
             WebClient web = new WebClient();
             web.Encoding = Encoding.UTF8;
-            //string str = web.DownloadString("http://www.weather.com.cn/weather/101230203.shtml");
-            //var t = web.DownloadStringTaskAsync("http://www.weather.com.cn/weather/101230203.shtml");    
-            //t.Wait();
-            var t = web.DownloadDataTaskAsync("http://www.weather.com.cn/weather/101230203.shtml");
-            string html = Encoding.UTF8.GetString(t.Result);
+            long tt =DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var t = web.DownloadDataTaskAsync($"http://toy1.weather.com.cn/search?cityname={cityname}&callback=success_jsonpCallback&_={tt}");
+            string city = Encoding.UTF8.GetString(t.Result);
+            string pattern = @"\[\{(.)*?(?=\))";
+            string cityjson = Regex.Match(city, pattern).ToString();
+            JArray citylist = JArray.Parse(cityjson);
+            //foreach (var item in citylist)
+            //{
+            //    string citys = item.SelectToken("$.ref").ToString();
+            //    string[] strs = citys.Split('~');
+            //}
+            string citys = citylist[0].SelectToken("$.ref").ToString();
+            string[] strs = citys.Split('~');
 
+            string url = $"http://www.weather.com.cn/weather/{strs[0]}.shtml";
+            var t1 = web.DownloadDataTaskAsync(url);
+            //var t1 = web.DownloadDataTaskAsync("http://www.weather.com.cn/weather/101230203.shtml");
+            string html = Encoding.UTF8.GetString(t1.Result);
+            web.Dispose();
             //var web2 = new HtmlWeb();
             //var doc = web2.Load("http://www.weather.com.cn/weather/101230203.shtml");
             HtmlDocument doc = new HtmlDocument();
