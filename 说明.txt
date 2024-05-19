@@ -1,9 +1,9 @@
 1、代码接口api 40天数据------------返回代码
-代码api接口：https://d1.weather.com.cn/wap40/101230502.html?_=1716047619949
+代码api接口：https://d1.weather.com.cn/wap_40d/101230502.html?_=1716047619949
 请求时可以不要时间戳。
 请求参数：
 Referer：https://m.weather.com.cn/
-Cookie：f_city=%E6%B3%89%E5%B7%9E%7C101230501%7C
+Cookie：f_city=%E6%B3%89%E5%B7%9E%7C101230501%7C   可以不用cookie
 Accept-Encoding：gzip, deflate, br, zstd
 Accept-Language：zh-CN,zh;q=0.9,en;q=0.8,ru;q=0.7,de;q=0.6
 
