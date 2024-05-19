@@ -365,7 +365,7 @@ namespace 天气预报
                 {
                     continue;
                 }
-
+                string a = item.QuerySelector(".h15listdayp2").InnerText;
             }
 
             return "";
