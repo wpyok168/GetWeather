@@ -23,13 +23,14 @@ namespace 天气预报
     {
         static void Main(string[] args)
         {
-           
-            GetCityWeatherAPI("思明");
+
+            //GetCityWeatherAPI("思明");
             //方法三
-            GetCityWeather("安溪");
+            // GetCityWeatherPC("伊宁核桃沟滑雪场");//伊宁核桃沟滑雪场
             //方法一
-            List<TQ> tq= GetWeather("安溪");
-            string retstr = ListToSB(tq, "安溪");
+            string cityname1 = "顺义";
+            List<TQ> tq= GetWeather(cityname1);
+            string retstr = ListToSB(tq, cityname1);
             //方法二
             WebClient web = new WebClient();
             web.Encoding = Encoding.UTF8;
@@ -240,7 +241,14 @@ namespace 天气预报
                         {
                             if (item.QuerySelector("p.win").QuerySelector("em") != null)
                             {
-                                tQ.NNW = item.QuerySelector("p.win").QuerySelector("em").QuerySelectorAll("span")[0].GetAttributeValue("title", "") + "转" + item.QuerySelector("p.win").QuerySelector("em").QuerySelectorAll("span")[1].GetAttributeValue("title", "");
+                                if (item.QuerySelector("p.win").QuerySelector("em").QuerySelectorAll("span").Count > 1)
+                                {
+                                    tQ.NNW = item.QuerySelector("p.win").QuerySelector("em").QuerySelectorAll("span")[0].GetAttributeValue("title", "") + "转" + item.QuerySelector("p.win").QuerySelector("em").QuerySelectorAll("span")[1].GetAttributeValue("title", "");
+                                }
+                                else
+                                {
+                                    tQ.NNW = item.QuerySelector("p.win").QuerySelector("em").QuerySelectorAll("span")[0].GetAttributeValue("title", "");
+                                }
                             }
 
                         }
@@ -352,20 +360,22 @@ namespace 天气预报
 
             return cityid;
         }
-        private static string GetCityWeather(string cityname)
+        private static string GetCityWeatherPC(string cityname)
         {
             //GetCityID("安溪");
-            //https://m.weather.com.cn/mweather15d/101230501.shtml
+            //http://www.weather.com.cn/weather/10113100104B.shtml
             Dictionary<string, string> cityid = GetCityID(cityname);
             WebClient web = new WebClient();
             web.Encoding = Encoding.UTF8;
-            var t = web.DownloadDataTaskAsync(new Uri($"https://m.weather.com.cn/mweather15d/{cityid["ac"]}.shtml"));
+            var t = web.DownloadDataTaskAsync(new Uri($"http://www.weather.com.cn/weather/{cityid["ac"]}.shtml"));
             t.Wait();
             string html = Encoding.UTF8.GetString(t.Result);
             HtmlDocument hdc = new HtmlDocument();
             hdc.LoadHtml(html);
-            List< HtmlNode> hn = (List<HtmlNode>)hdc.DocumentNode.QuerySelector(".h15listbody>.list-ul").QuerySelectorAll("li");
-           
+            List<HtmlNode> hn = new List<HtmlNode>();
+            hn = (List<HtmlNode>)hdc.DocumentNode.QuerySelector(".c7d").QuerySelector("ul").QuerySelectorAll("li");
+
+
             foreach (HtmlNode item in hn)
             {
                 if (item.Name.Equals("#text"))
@@ -377,11 +387,43 @@ namespace 天气预报
 
             return "";
         }
+        private static string GetCityWeatherMobile(string cityname)
+        {
+            //GetCityID("安溪");
+            //https://m.weather.com.cn/mweather15d/101230501.shtml
+            Dictionary<string, string> cityid = GetCityID(cityname);
+            WebClient web = new WebClient();
+            web.Encoding = Encoding.UTF8;
+            var t = web.DownloadDataTaskAsync(new Uri($"https://m.weather.com.cn/mweather15d/{cityid["ac"]}.shtml"));
+            t.Wait();
+            string html = Encoding.UTF8.GetString(t.Result);
+            HtmlDocument hdc = new HtmlDocument();
+            hdc.LoadHtml(html);
+            List<HtmlNode> hn = new List<HtmlNode>();
+            hn = (List<HtmlNode>)hdc.DocumentNode.QuerySelector(".h15listbody").QuerySelector("ul").QuerySelectorAll("li");
+
+
+            foreach (HtmlNode item in hn)
+            {
+                if (item.Name.Equals("#text"))
+                {
+                    continue;
+                }
+                string a = item.QuerySelector(".h15listdayp2").InnerText;
+            }
+
+            return "";
+        }
+
         private static string GetCityWeatherAPI(string cityname)
         {
             //GetCityID("安溪");
             //https://d1.weather.com.cn/wap_40d/101230502.html
             Dictionary<string, string> cityid = GetCityID(cityname);
+            if (cityid.Count==0)
+            {
+                return "未找到对应城市";
+            }
            // Dictionary<string, string> citypv = GetCityID(cityid["pv"]);
             WebClient web = new WebClient();
             web.Encoding = Encoding.UTF8;
