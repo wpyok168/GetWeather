@@ -28,7 +28,7 @@ namespace 天气预报
             //方法三
             // GetCityWeatherPC("伊宁核桃沟滑雪场");//伊宁核桃沟滑雪场
             //方法一
-            string cityname1 = "顺义";
+            string cityname1 = "官桥";
             List<TQ> tq= GetWeather(cityname1);
             string retstr = ListToSB(tq, cityname1);
             //方法二
@@ -214,6 +214,10 @@ namespace 天气预报
             doc.LoadHtml(html); //  The document contains <i><3级</i> tags
             HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes("//*[@id=\"7d\"]/ul"); // 有问题：丢失风力 ＜3级  Missing <i><3级</i> tags after SelectNodes
                                                                                            //CSS选择器需要再nuget: HtmlAgilityPack.CssSelectors
+            if (nodes==null)
+            {
+                return null;
+            }
             HtmlNode hnode = doc.DocumentNode.QuerySelector(".t.clearfix");  // 有问题：丢失风力 ＜3级
             HtmlNode hnode1 = doc.DocumentNode.QuerySelector(".c7d");
             List<TQ> list = new List<TQ>();
