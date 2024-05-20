@@ -322,6 +322,7 @@ namespace 天气预报
 
         public static string GetCityJsonData()
         {
+            //https://i.tq121.com.cn/j/wap2016/news/city_search_data.js?2022042521
             string retstr = string.Empty;
             //string name = Assembly.GetExecutingAssembly().GetName().Name;
             //string namespc = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Namespace;
